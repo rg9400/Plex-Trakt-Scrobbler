@@ -4,6 +4,8 @@ from trakt.interfaces.base import Interface
 
 import requests
 
+import logging
+
 # Import child interfaces
 from trakt.interfaces.oauth.device import DeviceOAuthInterface
 from trakt.interfaces.oauth.pin import PinOAuthInterface
@@ -14,6 +16,7 @@ __all__ = [
     'PinOAuthInterface'
 ]
 
+log = logging.getLogger(__name__)
 
 class OAuthInterface(Interface):
     path = 'oauth'
@@ -93,6 +96,23 @@ class OAuthInterface(Interface):
             },
             authenticated=False
         )
+
+        # Log response body for error details
+        if response.status_code >= 400:
+            log.warn('OAuth token_refresh response - status: %r | reason: %r | url: %r', response.status_code, response.reason, response.url)
+
+            try:
+                error_body = response.text
+                log.warn('OAuth token_refresh error body: %r', error_body)
+
+                # If it's JSON, try to parse it for more details
+                try:
+                    error_json = response.json()
+                    log.warn('OAuth token_refresh error JSON: %r', error_json)
+                except:
+                    pass
+            except:
+                log.warn('OAuth token_refresh - unable to read error response body')
 
         data = self.get_data(response, **kwargs)
 
