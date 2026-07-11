@@ -162,7 +162,12 @@ class SyncSource(Source):
         log.info('Fetching "%s"', path)
 
         try:
-            return func(exceptions=True)
+            kw = {'exceptions': True, 'pagination': True}
+            query = {'limit': '100'}
+            if data == enums.Data.Watched and media == enums.Media.Shows:
+                query['extended'] = 'progress'
+            kw['query'] = query
+            return func(**kw)
         except NotImplementedError:
             log.warn('Unable to fetch "%s", not implemented', path)
 
